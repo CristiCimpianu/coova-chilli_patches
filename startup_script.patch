@@ -1,0 +1,234 @@
+--- conf/chilli.in	2015-08-11 14:46:23.416244021 +0300
++++ conf/chilli.in	2015-08-13 11:01:06.305080582 +0300
+@@ -7,18 +7,20 @@
+ 
+ # Source function library.
+ . /etc/rc.d/init.d/functions
+-. @ETCCHILLI@/functions
++. /etc/chilli/functions
+ 
+-exec="@SBINDIR@/chilli"
++exec="/usr/sbin/chilli"
+ prog=$(basename $exec)
+ 
++[ -f $exec ] || exit 0
++
+ [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+ 
+ lockfile=/var/lock/subsys/$prog
+ 
+-MULTI=$(ls @ETCCHILLI@/*/chilli.conf 2>/dev/null)
++MULTI=$(ls /etc/chilli/*/chilli.conf 2>/dev/null)
+ [ -z "$DHCPIF" ] && [ -n "$MULTI" ] && {
+-    for c in $MULTI; 
++    for c in $MULTI;
+     do
+         echo "Found configuration $c"
+         DHCPIF=$(basename $(echo $c|sed 's#/chilli.conf##'))
+@@ -29,12 +31,12 @@
+     exit
+ }
+ 
+-pidfile=@VARRUN@/chilli.pid
++pidfile=/var/run/chilli.pid
+ CONFIG=/etc/chilli.conf
+ 
+ if [ -n "$DHCPIF" ]; then
+-    CONFIG=@ETCCHILLI@/$DHCPIF/chilli.conf
+-    pidfile=@VARRUN@/chilli.$DHCPIF.pid
++    CONFIG=/etc/chilli/$DHCPIF/chilli.conf
++    pidfile=/var/run/chilli.$DHCPIF.pid
+ fi
+ 
+ [ -f $CONFIG ] || {
+@@ -42,68 +44,138 @@
+     exit 0
+ }
+ 
+-start() {
+-    echo -n $"Starting $prog: "
++readconfig() {
++        chilliconf="/etc/chilli/config"
++        if [ -f "/etc/chilli/config.new" ]; then
++            mv /etc/chilli/config.new /etc/chilli/config
++        fi
+ 
+-    check_required
++        DNS1=`grep nameserver /etc/resolv.conf | head -1 | cut -d" " -f2`
++        DNS2=`grep nameserver /etc/resolv.conf | tail -1 | cut -d" " -f2`
++        sed -i "s/^HS_DNS1.*/HS_DNS1=$DNS1/g" $chilliconf
++        sed -i "s/^HS_DNS2.*/HS_DNS2=$DNS2/g" $chilliconf
++
++        GW=`grep GATEWAY /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2`
++        WAN="eth0"
++        LAN="eth1"
++        if [ -n $GW ]; then GW=`echo "$GW" | tr -d '"'` ; fi
++        if [ ! -z $GW ]; then
++                WAN="eth1"
++                LAN="eth0"
++                IP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-eth0 | head -1 | cut -d"=" -f2 | tr -d '"'`
++                NETMASK=`grep NETMASK /etc/sysconfig/network-scripts/ifcfg-eth0 | head -1 | cut -d"=" -f2 | tr -d '"'`
++        else
++                GW=`grep GATEWAY /etc/sysconfig/network-scripts/ifcfg-eth0 | head -1 | cut -d"=" -f2`
++                IP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2 | tr -d '"'`
++                NETMASK=`grep NETMASK /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2 | tr -d '"'`
++        fi
++        sed -i "s/^HS_WANIF.*/HS_WANIF=$WAN/g" $chilliconf
++        sed -i "s/^HS_LANIF.*/HS_LANIF=$LAN/g" $chilliconf
+ 
+-    /sbin/modprobe tun >/dev/null 2>&1
+-    echo 1 > /proc/sys/net/ipv4/ip_forward
++        iparr=(${IP//./ })
++        maskarr=(${NETMASK//./ })
++        netarr=()
++        for i in {0..3}
++        do
++            netarr[$i]=$((${iparr[i]}&${maskarr[i]}))
++        done
++        NET=$(printf ".%s" "${netarr[@]}")
++        NET=${NET:1}
++
++        sed -i "s/^HS_NETWORK.*/HS_NETWORK=$NET/g" $chilliconf
++        sed -i "s/^HS_NETMASK.*/HS_NETMASK=$NETMASK/g" $chilliconf
++        sed -i "s/^HS_UAMLISTEN.*/HS_UAMLISTEN=$IP/g" $chilliconf
++
++        ipsplit=`echo ${IP//./ }`
++        iphex=`printf "%02X" $ipsplit `
++        tlv="2B063304"$iphex
++        sed -i "s/^HS_DHCPOPT.*/HS_DHCPOPT=\"$tlv\"/g" $chilliconf
+ 
+-    [ -e /dev/net/tun ] || {
+-        (cd /dev; mkdir net; cd net; mknod tun c 10 200)
+-    }
++        . $chilliconf
++}
+ 
+-    writeconfig
+-    radiusconfig
++case "$1" in
++    start)
++        if [ '0' == `uci -q get chilli.setting.enable` ]; then
++            exit 0;
++        fi
+ 
+-    test ${HS_ADMINTERVAL:-0} -gt 0 && {
+-        (crontab -l 2>&- | grep -v $0
+-        echo "*/$HS_ADMINTERVAL * * * * $0 radconfig") | crontab - 2>&-
+-    }
++        echo -n $"Starting $prog: "
+ 
+-    test ${HS_LANIF_KEEPADDR:-0} -eq 0 && ifconfig $HS_LANIF 0.0.0.0
++        check_required
+ 
+-    daemon $exec -c $CONFIG
+-    retval=$?
+-    echo
+-    [ $retval -eq 0 ] && touch $lockfile
+-    return $retval
+-}
++        /sbin/modprobe tun >/dev/null 2>&1
++        echo 1 > /proc/sys/net/ipv4/ip_forward
+ 
+-stop() {
+-    echo -n $"Stopping $prog: "
+-    crontab -l 2>&- | grep -v $0 | crontab -
+-
+-    killproc $prog
+-    retval=$?
+-    echo
+-    [ $retval -eq 0 ] && rm -f $lockfile
+-    [ $retval -eq 0 ] && rm -f $PIDFILE
+-    [ $retval -eq 0 ] && rm -f $RUN_D/$IPCFILE
+-    [ $retval -eq 0 ] && rm -f $CMDSOCK
+-    [ $retval -eq 0 ] && /bin/rm -f @VARRUN@/chilli.*.cfg.bin
+-    return $retval
+-}
++        [ -e /dev/net/tun ] || {
++            (cd /dev; mkdir net; cd net; mknod tun c 10 200)
++        }
+ 
+-restart() {
+-    stop
+-    start
+-}
++        readconfig
++        writeconfig
++        radiusconfig
+ 
+-case "$1" in
+-    start|stop|restart)
+-        $1
++        test ${HS_ADMINTERVAL:-0} -gt 0 && {
++            (crontab -l 2>&- | grep -v $0
++            echo "*/$HS_ADMINTERVAL * * * * $0 radconfig") | crontab - 2>&-
++        }
++
++        test ${HS_LANIF_KEEPADDR:-0} -eq 0 && ifconfig $HS_LANIF 0.0.0.0
++
++        if [ "$(which start-stop-daemon 2>/dev/null)" = "" ]; then
++            daemon $exec -c $CONFIG --pidfile=$pidfile
++        else
++            start-stop-daemon -S --pidfile=$pidfile --user=chilli \
++                    --exec $exec -- -c $CONFIG &
++        fi
++        retval=$?
++        echo
++        [ $retval -eq 0 ] && touch $lockfile
++
++        if [ -z $2 ]; then
++            /etc/init.d/xl2tpd restart
++        fi
++        ;;
++    stop)
++        echo -n $"Stopping $prog: "
++        crontab -l 2>&- | grep -v $0 | crontab -
++
++        if [ "$(which start-stop-daemon 2>/dev/null)" != "" ]; then
++            start-stop-daemon -K --pidfile=$pidfile --user=chilli \
++                $exec
++        fi
++        ifconfig $HS_LANIF $HS_UAMLISTEN netmask $HS_NETMASK
++
++        killproc $prog
++        retval=$?
++        echo
++        [ $retval -eq 0 ] && rm -f $lockfile
++        [ $retval -eq 0 ] && rm -f $PIDFILE
++        [ $retval -eq 0 ] && rm -f $RUN_D/$IPCFILE
++        [ $retval -eq 0 ] && rm -f $CMDSOCK
++        [ $retval -eq 0 ] && /bin/rm -f /var/run/chilli.*.cfg.bin
++        if [ -z $2 ]; then
++            /etc/init.d/xl2tpd restart
++        fi
++        ;;
++    restart)
++        $0 stop me
++        sleep 1
++        $0 start me
++        RETVAL=$?
++        if [ -z $2 ]; then
++            /etc/init.d/xl2tpd restart
++        fi
+         ;;
+     force-reload)
+-        restart
++        $0 restart
+         ;;
+     status)
+         status $prog
+         ;;
+     try-restart|condrestart)
+         if status $prog >/dev/null ; then
+-            restart
++            $0 restart
+         fi
+ 	;;
+     reload)
+@@ -115,6 +187,7 @@
+         action $"Service ${0##*/} does not support the reload action: " /bin/false
+         exit 3
+         ;;
++
+     *)
+         echo $"Usage: $0 {start|stop|status|restart|try-restart|force-reload}"
+         exit 2
