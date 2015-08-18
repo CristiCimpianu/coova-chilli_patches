@@ -71,6 +71,7 @@ sh bootstrap
     --enable-statusfile \
     --enable-multiroute \
     --enable-multilan \
+    --enable-location \
 %if %{!?_without_ssl:1}0
     --with-openssl \
     --enable-chilliradsec \
@@ -94,9 +95,9 @@ cp -p $RPM_BUILD_ROOT%{_sysconfdir}/chilli/defaults $RPM_BUILD_ROOT%{_sysconfdir
 # throw away the initial comments telling to copy the defaults to config
 perl -ni -e '1 .. /^\s*$/ and /^#/ or print' $RPM_BUILD_ROOT%{_sysconfdir}/chilli/config
 
-mkdir -p $RPM_BUILD_ROOT%{_datadir}
-mv $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www $RPM_BUILD_ROOT%{_datadir}/chilli
-ln -s ../..%{_datadir}/chilli $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www
+#mkdir -p $RPM_BUILD_ROOT%{_datadir}
+#mv $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www $RPM_BUILD_ROOT%{_datadir}/chilli
+#ln -s ../..%{_datadir}/chilli $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www
 
 # uam/ and hotspotlogin.cgi seem not needed any more.
 # mkdir -p $RPM_BUILD_ROOT%{_datadir}/chilli/uam
@@ -151,6 +152,8 @@ fi
 %dir %{_sysconfdir}/chilli/www
 %attr(755,root,root)%{_sysconfdir}/chilli/www/config.sh
 %attr(4750,root,root)%{_sbindir}/chilli_script
+#%dir %{_datadir}/chilli
+#%{_datadir}/chilli/*
 %{_sysconfdir}/chilli/www/*
 %{_sysconfdir}/chilli/wwwsh
 %{_sysconfdir}/chilli/functions

@@ -1,5 +1,5 @@
---- conf/defaults.in	2015-08-11 16:20:42.233310939 +0300
-+++ conf/defaults.in	2015-08-11 16:20:35.595310861 +0300
+--- conf/defaults.in	2015-08-10 04:59:01.879745856 -0400
++++ conf/defaults.in	2015-08-18 11:53:06.859489895 -0400
 @@ -1,20 +1,20 @@
  # -*- mode: shell-script; -*-
  #
@@ -75,7 +75,7 @@
  #   Same principal goes for HS_UAMHOMEPAGE.
 -HS_UAMHOMEPAGE=http://\$HS_UAMLISTEN:\$HS_UAMPORT/www/coova.html
 +#HS_UAMHOMEPAGE=http://\$HS_UAMLISTEN:\$HS_UAMPORT/www/coova.html
-+HS_UAMHOMEPAGE=http://\$HS_UAMLISTEN/apc/hotspot/login.html
++HS_UAMHOMEPAGE=none
  
  #   This option will be configured to be the WISPr LoginURL as well
  #   as provide "uamService" to the ChilliController. The UAM Service is
@@ -163,9 +163,10 @@
  
  #   WISPr settings (to form a proper WISPr-Location-Id)
  # HS_LOC_NETWORK="My Network"	   # Network name
-@@ -200,3 +210,5 @@
+@@ -200,3 +210,6 @@
  # HS_REG_MODE="tos" # or self, other
  # HS_RAD_PROTO="pap" # or mschapv2, chap
  # HS_USE_MAP=on
 +
 +HS_DHCPOPT=""
++HS_LOCATIONOPT82=on
