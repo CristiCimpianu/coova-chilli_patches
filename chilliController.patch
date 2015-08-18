@@ -1,0 +1,227 @@
+--- www/chilliController.js	2015-08-14 11:02:20.638059371 +0300
++++ www/chilliController.js	2015-08-14 11:16:22.866069330 +0300
+@@ -1,6 +1,8 @@
+ chilliController.onUpdate = updateUI ;
+ chilliController.onError  = handleError ;
+ chilliClock.onTick = function () { }
++// 1 = captive, 2 = agreement, 3 = password
++chilliController.mode = 1 ;
+ 
+ if (!window.queryObj) {
+     window.queryObj = new Object();
+@@ -14,15 +16,40 @@
+   else return document.all.tags(str);
+ }
+ 
+-if (document.all) 
++if (document.all)
+   document.getElementsByTagName = ie_getElementsByTagName;
+ 
+-function hidePage(page) { 
++function hidePage(page) {
+     var e = document.getElementById(page);
+     if (e != null) e.style.display='none';
+ }
+ 
+-function showPage(page) { 
++function showPasswordOnly() {
++    var usernameLabel = document.getElementById('usernameLabel');
++    if (usernameLabel != null) usernameLabel.style.display='none';
++
++    var e = document.getElementById('username');
++    if (e != null) e.style.display='none';
++}
++
++function showAgreement() {
++    var usernameLabel = document.getElementById('usernameLabel');
++    if (usernameLabel != null) usernameLabel.style.display='none';
++
++    var username = document.getElementById('username');
++    if (username != null) username.style.display='none';
++
++    var passwordLabel = document.getElementById('passwordLabel');
++    if (passwordLabel != null) passwordLabel.style.display='none';
++
++    var password = document.getElementById('password');
++    if (password != null) password.style.display='none';
++
++    var password = document.getElementById('submitBtn');
++    password.value = 'Agree';
++}
++
++function showPage(page) {
+     var e = document.getElementById(page);
+     if (e != null) e.style.display='inline';
+ }
+@@ -43,10 +70,10 @@
+ chilliClock.onChange = function ( newval ) {
+     setElementValue("sessionTime", chilliController.formatTime(newval));
+ }
+-    
++
+ function updateUI (cmd ) {
+-    log ( "Update UI is called. chilliController.clientState = " + chilliController.clientState ) ; 
+-    
++    log ( "Update UI is called. chilliController.clientState = " + chilliController.clientState ) ;
++
+     clearTimeout ( delayTimer );
+ 
+     if ( chilliController.redir ) {
+@@ -89,7 +116,7 @@
+ 	window.location.href = chilliController.redir.redirectionURL;
+ 	chilliController.redir.redirectionURL = null;
+     }
+-    
++
+     if ( chilliController.clientState == 2 ) showWaitPage();
+ }
+ 
+@@ -103,9 +130,16 @@
+     var username =  document.getElementById('username').value ;
+     var password =  document.getElementById('password').value ;
+ 
++    if (chilliController.mode == 2) {
++        username = 'agreement';
++        password = 'password';
++    } else if (chilliController.mode == 3) {
++        username = 'passwordmode';
++    }
++
+     if (username == null || username == '')
+ 	return setElementValue('logonMessage', 'Username is required');
+-    
++
+     showWaitPage(1000);
+     chilliController.logon( username , password ) ;
+ }
+@@ -121,12 +155,18 @@
+ 
+ /* User interface pages update */
+ function showLogonPage() {
+-    if (chilliController.openid) 
++    if (chilliController.openid)
+         showPage('openIDSelect');
+     showPage("logonPage");
+     hidePage("statusPage");
+     hidePage("waitPage");
+     hidePage("errorPage");
++
++    if (chilliController.mode == 2) {
++	    showAgreement();
++    } else if (chilliController.mode == 3) {
++	    showPasswordOnly();
++    }
+ }
+ 
+ function showStatusPage() {
+@@ -134,12 +174,12 @@
+     showPage("statusPage");
+     hidePage("waitPage");
+     hidePage("errorPage");
+-    
++
+     // Update message
+-    if ( chilliController.message ) { 
++    if ( chilliController.message ) {
+ 	setElementValue("statusMessage", chilliController.message);
+     }
+-    
++
+     // Update session
+     setElementValue("sessionId",
+ 		    chilliController.session.sessionId ?
+@@ -150,7 +190,7 @@
+ 		    chilliController.session.startTime ?
+ 		    chilliController.session.startTime :
+ 		    "Not available");
+-    
++
+     setElementValue("sessionTimeout",
+ 		    chilliController.formatTime(chilliController.session.sessionTimeout, 'unlimited'));
+ 
+@@ -167,13 +207,13 @@
+     // Update accounting
+     setElementValue("sessionTime",
+ 		    chilliController.formatTime(chilliController.accounting.sessionTime));
+-    
++
+     setElementValue("idleTime",
+ 		    chilliController.formatTime(chilliController.accounting.idleTime));
+-    
++
+     setElementValue("inputOctets" , chilliController.formatBytes(chilliController.accounting.inputOctets));
+     setElementValue("outputOctets", chilliController.formatBytes(chilliController.accounting.outputOctets));
+-    
++
+     chilliClock.resync (chilliController.accounting.sessionTime);
+ }
+ 
+@@ -215,12 +255,12 @@
+ 
+ function showWaitPage(delay) {
+     /* Wait for delay  */
+-    clearTimeout(delayTimer);	
++    clearTimeout(delayTimer);
+     if (typeof(delay) == 'number' && (delay > 10)) {
+ 	delayTimer= setTimeout('showWaitPage(0)' , delay);
+ 	return;
+     }
+-    
++
+     /* show the waitPage */
+     hidePage("logonPage");
+     hidePage("statusPage");
+@@ -230,7 +270,7 @@
+ 
+ function showErrorPage( str )  {
+     setTimeout('chilliController.refresh()', 15000);
+-    
++
+     hidePage("logonPage");
+     hidePage("statusPage");
+     hidePage("waitPage");
+@@ -241,9 +281,15 @@
+ var chillijsWindowOnLoad = window.onload;
+ var delayTimer; // global reference to delayTimer
+ window.onload = function() {
+-    if (chillijsWindowOnLoad) 
++    if (chillijsWindowOnLoad)
+ 	chillijsWindowOnLoad();
+ 
++    if (chilliController.mode == 2) {
++	setElementValue('logonMessage', 'Agreement');
++    } else if (chilliController.mode == 3) {
++	setElementValue('logonMessage', 'Password Only');
++    }
++
+     var logonForm = document.getElementById('logonForm');
+ 
+     var head = document.getElementsByTagName("head")[0];
+@@ -271,17 +317,17 @@
+     }
+ 
+     if (logonForm.innerHTML == '') {
+-	if (head != null) {
+-	    var script = document.createElement('script');
+-	    script.id = 'chilliform';
+-	    script.type = 'text/javascript';
+-	    script.src = 'http://'+chilliController.host+':'+chilliController.port+'/www/chilliform.chi';
+-	    head.appendChild(script);
+-	} else {
+-	    logonForm.innerHTML='Error loading generic login form';
+-	}
++        if (head != null) {
++            var script = document.createElement('script');
++            script.id = 'chilliform';
++            script.type = 'text/javascript';
++            script.src = 'http://'+chilliController.host+':'+chilliController.port+'/www/chilliform.chi';
++            head.appendChild(script);
++        } else {
++            logonForm.innerHTML='Error loading generic login form';
++        }
+     }
+ 
+-    showWaitPage(); 
++    showWaitPage();
+     setTimeout('chilliController.refresh()', 500);
+ }

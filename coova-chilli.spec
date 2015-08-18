@@ -4,9 +4,16 @@ Version:   1.3.1.3
 Release:   2%{?dist}
 URL:       http://coova.github.io/
 Source0:   %{name}-%{version}.tar.gz
+# These should be periodically refreshed upon rebuild with
+# wget -O coova-chilli-uam-index.html http://ap.coova.org/uam/
+# wget -O coova-chilli-uam-chilli.js http://ap.coova.org/js/chilli.js
+#Source100: coova-chilli-uam-index.html
+#Source101: coova-chilli-uam-chilli.js
+Source110: coova-chilli-httpd.conf
 Patch100:  startup_script.patch
 Patch110:  default_config.patch
 Patch120:  up_script.patch
+Patch130:  chilliController.patch
 License:   GPL
 Group:     System Environment/Daemons
 
@@ -17,7 +24,7 @@ Group:     System Environment/Daemons
 %define chilli_dir    /usr/share/chilli
 Requires(pre): /sbin/chkconfig, %{_sbindir}/groupadd, %{_sbindir}/useradd
 
-Requires: httpd
+Requires: httpd haserl
 
 %if %{!?_without_ssl:1}0
 BuildRequires: openssl-devel libtool gengetopt
@@ -38,6 +45,7 @@ your favorite radius server. Read more at http://coova.github.io/.
 %patch100 -p0
 %patch110 -p0
 %patch120 -p0
+%patch130 -p0
 
 %build
 sh bootstrap
@@ -52,6 +60,17 @@ sh bootstrap
     --with-poll \
     --enable-libjson \
     --enable-dhcpopt \
+    --enable-gardenext \
+    --enable-gardenaccounting \
+    --enable-chillixml \
+    --enable-proxyvsa \
+    --enable-ipwhitelist \
+    --enable-uamdomainfile \
+    --enable-redirdnsreq \
+    --enable-authedallowed \
+    --enable-statusfile \
+    --enable-multiroute \
+    --enable-multilan \
 %if %{!?_without_ssl:1}0
     --with-openssl \
     --enable-chilliradsec \
@@ -75,6 +94,24 @@ cp -p $RPM_BUILD_ROOT%{_sysconfdir}/chilli/defaults $RPM_BUILD_ROOT%{_sysconfdir
 # throw away the initial comments telling to copy the defaults to config
 perl -ni -e '1 .. /^\s*$/ and /^#/ or print' $RPM_BUILD_ROOT%{_sysconfdir}/chilli/config
 
+mkdir -p $RPM_BUILD_ROOT%{_datadir}
+mv $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www $RPM_BUILD_ROOT%{_datadir}/chilli
+ln -s ../..%{_datadir}/chilli $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www
+
+# uam/ and hotspotlogin.cgi seem not needed any more.
+# mkdir -p $RPM_BUILD_ROOT%{_datadir}/chilli/uam
+# cp %{SOURCE100} $RPM_BUILD_ROOT%{_datadir}/chilli/uam/index.html
+# cp %{SOURCE101} $RPM_BUILD_ROOT%{_datadir}/chilli/uam/chilli.js
+# perl -pi -e 's-ap.coova.org/js/chilli.js-10.1.0.1/uam/chilli.js-g' $RPM_BUILD_ROOT%{_datadir}/chilli/uam/index.html
+# mkdir -p $RPM_BUILD_ROOT%{_datadir}/chilli/images
+# cp $RPM_BUILD_ROOT%{_datadir}/chilli/coova.jpg $RPM_BUILD_ROOT%{_datadir}/chilli/images/
+#
+# mkdir -p $RPM_BUILD_ROOT%{_datadir}/chilli/cgi-bin
+# cp doc/hotspotlogin.cgi $RPM_BUILD_ROOT%{_datadir}/chilli/cgi-bin/
+
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d
+cp %{SOURCE110} $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/chilli.conf
+
 %check
 rm -f $RPM_BUILD_ROOT%{_libdir}/python/*.pyc
 rm -f $RPM_BUILD_ROOT%{_libdir}/python/*.pyo
@@ -89,6 +126,7 @@ make clean
 
 %post
 /sbin/chkconfig --add chilli
+/sbin/service httpd condrestart 2>&1 >/dev/null
 /sbin/service chilli condrestart 2>&1 >/dev/null
 
 %preun
@@ -103,6 +141,7 @@ fi
 %{_libdir}/*.so*
 %{_libdir}/python/CoovaChilliLib.py*
 %{_sysconfdir}/init.d/chilli
+%{_sysconfdir}/httpd/conf.d/chilli.conf
 %doc AUTHORS COPYING ChangeLog INSTALL README doc/dictionary.coovachilli doc/hotspotlogin.cgi
 %config %{_sysconfdir}/chilli.conf
 %config %{_sysconfdir}/chilli/gui-config-default.ini
