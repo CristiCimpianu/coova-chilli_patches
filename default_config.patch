@@ -70,7 +70,7 @@
  #   HS_UAMSERVER to form the actual "--uamserver" option in chilli.
 -HS_UAMFORMAT=http://\$HS_UAMLISTEN:\$HS_UAMUIPORT/www/login.chi
 +#HS_UAMFORMAT=http://\$HS_UAMLISTEN:\$HS_UAMUIPORT/www/login.chi
-+HS_UAMFORMAT=http://\$HS_UAMLISTEN/apc/hotspot/login.html
++HS_UAMFORMAT=http://1.0.0.1/www/login.html
  
  #   Same principal goes for HS_UAMHOMEPAGE.
 -HS_UAMHOMEPAGE=http://\$HS_UAMLISTEN:\$HS_UAMPORT/www/coova.html

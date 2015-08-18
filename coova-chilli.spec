@@ -9,7 +9,7 @@ Source0:   %{name}-%{version}.tar.gz
 # wget -O coova-chilli-uam-chilli.js http://ap.coova.org/js/chilli.js
 #Source100: coova-chilli-uam-index.html
 #Source101: coova-chilli-uam-chilli.js
-Source110: coova-chilli-httpd.conf
+#Source110: coova-chilli-httpd.conf
 Patch100:  startup_script.patch
 Patch110:  default_config.patch
 Patch120:  up_script.patch
@@ -95,9 +95,9 @@ cp -p $RPM_BUILD_ROOT%{_sysconfdir}/chilli/defaults $RPM_BUILD_ROOT%{_sysconfdir
 # throw away the initial comments telling to copy the defaults to config
 perl -ni -e '1 .. /^\s*$/ and /^#/ or print' $RPM_BUILD_ROOT%{_sysconfdir}/chilli/config
 
-#mkdir -p $RPM_BUILD_ROOT%{_datadir}
-#mv $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www $RPM_BUILD_ROOT%{_datadir}/chilli
-#ln -s ../..%{_datadir}/chilli $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www
+mkdir -p $RPM_BUILD_ROOT/var/www/html/chilli
+mv $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www $RPM_BUILD_ROOT/var/www/html/chilli
+ln -s /var/www/html/chilli/www $RPM_BUILD_ROOT%{_sysconfdir}/chilli/www
 
 # uam/ and hotspotlogin.cgi seem not needed any more.
 # mkdir -p $RPM_BUILD_ROOT%{_datadir}/chilli/uam
@@ -110,8 +110,8 @@ perl -ni -e '1 .. /^\s*$/ and /^#/ or print' $RPM_BUILD_ROOT%{_sysconfdir}/chill
 # mkdir -p $RPM_BUILD_ROOT%{_datadir}/chilli/cgi-bin
 # cp doc/hotspotlogin.cgi $RPM_BUILD_ROOT%{_datadir}/chilli/cgi-bin/
 
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d
-cp %{SOURCE110} $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/chilli.conf
+#mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d
+#cp %{SOURCE110} $RPM_BUILD_ROOT%{_sysconfdir}/httpd/conf.d/chilli.conf
 
 %check
 rm -f $RPM_BUILD_ROOT%{_libdir}/python/*.pyc
@@ -127,7 +127,7 @@ make clean
 
 %post
 /sbin/chkconfig --add chilli
-/sbin/service httpd condrestart 2>&1 >/dev/null
+#/sbin/service httpd condrestart 2>&1 >/dev/null
 /sbin/service chilli condrestart 2>&1 >/dev/null
 
 %preun
@@ -142,19 +142,18 @@ fi
 %{_libdir}/*.so*
 %{_libdir}/python/CoovaChilliLib.py*
 %{_sysconfdir}/init.d/chilli
-%{_sysconfdir}/httpd/conf.d/chilli.conf
+#%{_sysconfdir}/httpd/conf.d/chilli.conf
 %doc AUTHORS COPYING ChangeLog INSTALL README doc/dictionary.coovachilli doc/hotspotlogin.cgi
 %config %{_sysconfdir}/chilli.conf
 %config %{_sysconfdir}/chilli/gui-config-default.ini
 %config %{_sysconfdir}/chilli/defaults
 %config %{_sysconfdir}/chilli/config
 %dir %{_sysconfdir}/chilli
-%dir %{_sysconfdir}/chilli/www
-%attr(755,root,root)%{_sysconfdir}/chilli/www/config.sh
+%dir /var/www/html/chilli/www
+%attr(755,root,root)/var/www/html/chilli/www/config.sh
 %attr(4750,root,root)%{_sbindir}/chilli_script
-#%dir %{_datadir}/chilli
-#%{_datadir}/chilli/*
-%{_sysconfdir}/chilli/www/*
+%{_sysconfdir}/chilli/www
+/var/www/html/chilli/www/*
 %{_sysconfdir}/chilli/wwwsh
 %{_sysconfdir}/chilli/functions
 %{_sysconfdir}/chilli/*.sh
