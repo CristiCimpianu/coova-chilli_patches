@@ -1,5 +1,5 @@
---- conf/defaults.in	2015-08-10 04:59:01.879745856 -0400
-+++ conf/defaults.in	2015-08-25 09:27:13.000000000 -0400
+--- conf/defaults.in	2015-08-26 03:28:13.055418947 -0400
++++ conf/defaults.in	2015-08-26 02:42:11.000000000 -0400
 @@ -1,20 +1,20 @@
  # -*- mode: shell-script; -*-
  #
@@ -121,7 +121,7 @@
  # HS_RADCONF_AUTHPORT=1812			 # Auth port
  # HS_RADCONF_USER=coovachilli			 # Username
  # HS_RADCONF_PWD=coovachilli			 # Password
-@@ -146,17 +155,18 @@
+@@ -146,18 +155,18 @@
  #
  # Uncomment the following to add ports to the allowed local ports list
  # The up.sh script will allow these local ports to be used, while the default
@@ -129,6 +129,7 @@
 +# is to block all unwanted traffic to the tun/tap.
  #
 -# HS_TCP_PORTS="80 443"
+-# HS_UDP_PORTS="1701"
 +HS_TCP_PORTS="80 443"
 +HS_UDP_PORTS="1701"
  
@@ -144,7 +145,7 @@
  # HS_ADMUSR=coovachilli
  # HS_ADMPWD=coovachilli
  
-@@ -171,24 +181,24 @@
+@@ -172,24 +181,24 @@
  #   by chilli with url /www/<file name>. Only extentions like .html
  #   .jpg, .gif, .png, .js are allowed. See below for using .chi as a
  #   CGI extension.
@@ -174,7 +175,7 @@
  
  #   WISPr settings (to form a proper WISPr-Location-Id)
  # HS_LOC_NETWORK="My Network"	   # Network name
-@@ -200,3 +210,6 @@
+@@ -201,3 +210,6 @@
  # HS_REG_MODE="tos" # or self, other
  # HS_RAD_PROTO="pap" # or mschapv2, chap
  # HS_USE_MAP=on
