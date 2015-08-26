@@ -1,5 +1,5 @@
 --- conf/defaults.in	2015-08-10 04:59:01.879745856 -0400
-+++ conf/defaults.in	2015-08-18 11:53:06.859489895 -0400
++++ conf/defaults.in	2015-08-25 09:27:13.000000000 -0400
 @@ -1,20 +1,20 @@
  # -*- mode: shell-script; -*-
  #
@@ -144,7 +144,18 @@
  # HS_ADMUSR=coovachilli
  # HS_ADMPWD=coovachilli
  
-@@ -180,15 +190,15 @@
+@@ -171,24 +181,24 @@
+ #   by chilli with url /www/<file name>. Only extentions like .html
+ #   .jpg, .gif, .png, .js are allowed. See below for using .chi as a
+ #   CGI extension.
+-HS_WWWDIR=@ETCCHILLI@/www
++HS_WWWDIR=/var/www/html/chilli/www
+ 
+ #   Using this option assumes 'haserl' is installed per-default
+ #   but, and CGI type program can ran from wwwsh to process requests
+ #   to chilli with url /www/filename.chi
+-HS_WWWBIN=@ETCCHILLI@/wwwsh
++HS_WWWBIN=/var/www/html/chilli/wwwsh
  
  #   Some configurations used in certain user interfaces
  #
