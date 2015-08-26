@@ -73,8 +73,8 @@
 +                IP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2 | tr -d '"'`
 +                NETMASK=`grep NETMASK /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2 | tr -d '"'`
 +        fi
-+        sed -i "s/^HS_WANIF.*/HS_WANIF=$WAN/g" $chilliconf
-+        sed -i "s/^HS_LANIF.*/HS_LANIF=$LAN/g" $chilliconf
++        sed -i "s/^HS_WANIF=.*/HS_WANIF=$WAN/g" $chilliconf
++        sed -i "s/^HS_LANIF=.*/HS_LANIF=$LAN/g" $chilliconf
  
 -    /sbin/modprobe tun >/dev/null 2>&1
 -    echo 1 > /proc/sys/net/ipv4/ip_forward
