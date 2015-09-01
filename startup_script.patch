@@ -1,13 +1,13 @@
---- conf/chilli.in	2015-08-28 10:38:11.665845630 -0400
-+++ conf/chilli.in	2015-08-28 10:36:13.531241373 -0400
-@@ -43,82 +45,148 @@
+--- conf/chilli.in	2015-09-01 06:46:39.189976922 -0400
++++ conf/chilli.in	2015-09-01 07:36:43.943324043 -0400
+@@ -42,84 +42,149 @@
      exit 0
  }
  
 +readconfig() {
-+        chilliconf="/etc/chilli/config"
-+        if [ -f "/etc/chilli/config.new" ]; then
-+            mv /etc/chilli/config.new /etc/chilli/config
++        chilliconf="@ETCCHILLI@/config"
++        if [ -f "@ETCCHILLI@/config.new" ]; then
++            mv @ETCCHILLI@/config.new @ETCCHILLI@/config
 +        fi
  
 -start() {
@@ -70,7 +70,7 @@
 -    }
 -
 -    test ${HS_LANIF_KEEPADDR:-0} -eq 0 && {
--        storeroutes $ROUTES_FILE
+-        storeroutes $HS_LANIF
 -        ifconfig $HS_LANIF 0.0.0.0
 -    }
 -
@@ -80,7 +80,6 @@
 -    [ $retval -eq 0 ] && touch $lockfile
 -    return $retval
 +        . $chilliconf
-+        ROUTES_FILE=/var/run/chilli_routes.$HS_LANIF
  }
  
 -stop() {
@@ -101,35 +100,29 @@
 -    [ $retval -eq 0 ] && /bin/rm -f @VARRUN@/chilli.*.cfg.bin
 -
 -    test ${HS_LANIF_KEEPADDR:-0} -eq 0 && {
--        restoreroutes $ROUTES_FILE
--        [ -f $ROUTES_FILE ] && rm $ROUTES_FILE
--    }
+-        [ -f $ROUTES_FILE ] && {
+-            restoreroutes
+-            rm $ROUTES_FILE
 +case "$1" in
 +    start)
 +        if [ '0' == `uci -q get chilli.setting.enable` ]; then
 +            exit 0;
 +        fi
- 
--    return $retval
--}
++
 +        echo -n $"Starting $prog: "
- 
--restart() {
--    stop
--    start
--}
++
 +        check_required
- 
--case "$1" in
--    start|stop|restart)
--        $1
++
 +        /sbin/modprobe tun >/dev/null 2>&1
 +        echo 1 > /proc/sys/net/ipv4/ip_forward
 +
 +        [ -e /dev/net/tun ] || {
 +            (cd /dev; mkdir net; cd net; mknod tun c 10 200)
-+        }
-+
+         }
+-    }
+ 
+-    return $retval
+-}
 +        readconfig
 +        writeconfig
 +        radiusconfig
@@ -138,12 +131,19 @@
 +            (crontab -l 2>&- | grep -v $0
 +            echo "*/$HS_ADMINTERVAL * * * * $0 radconfig") | crontab - 2>&-
 +        }
-+
+ 
+-restart() {
+-    stop
+-    start
+-}
 +        test ${HS_LANIF_KEEPADDR:-0} -eq 0 && {
-+            storeroutes $ROUTES_FILE
++            storeroutes $HS_LANIF
 +            ifconfig $HS_LANIF 0.0.0.0
 +        }
-+
+ 
+-case "$1" in
+-    start|stop|restart)
+-        $1
 +        if [ "$(which start-stop-daemon 2>/dev/null)" = "" ]; then
 +            daemon $exec -c $CONFIG --pidfile=$pidfile
 +        else
@@ -178,8 +178,10 @@
 +
 +        test ${HS_LANIF_KEEPADDR:-0} -eq 0 && {
 +            ifconfig $HS_LANIF $HS_UAMLISTEN netmask $HS_NETMASK
-+            restoreroutes $ROUTES_FILE
-+            [ -f $ROUTES_FILE ] && rm $ROUTES_FILE
++            [ -f $ROUTES_FILE ] && {
++                restoreroutes
++                rm $ROUTES_FILE
++            }
 +        }
 +
 +        if [ -z $2 ]; then
@@ -209,7 +211,7 @@
          fi
  	;;
      reload)
-@@ -130,6 +198,7 @@
+@@ -131,6 +196,7 @@
          action $"Service ${0##*/} does not support the reload action: " /bin/false
          exit 3
          ;;
