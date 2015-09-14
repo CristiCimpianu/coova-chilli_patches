@@ -1,6 +1,6 @@
 --- conf/chilli.in	2015-09-04 07:55:51.579050871 -0400
-+++ conf/chilli.in	2015-09-04 09:03:19.000129933 -0400
-@@ -42,84 +42,205 @@
++++ conf/chilli.in	2015-09-14 08:13:44.674094653 -0400
+@@ -42,84 +42,213 @@
      exit 0
  }
  
@@ -63,7 +63,11 @@
 -    /sbin/modprobe tun >/dev/null 2>&1
 -    echo 1 > /proc/sys/net/ipv4/ip_forward
 +        var=`uci -q get chilli.setting.uamdomain`
-+        sed -i "s/^HS_UAMDOMAINS.*/HS_UAMDOMAINS=\"$var\"/g" $chilliconf
++        def=`uci -q get chilli.setting.default_uamdomain`
++        if [ -n "$var" -a -n "$def" ]; then
++            var=$var","
++        fi
++        sed -i "s/^HS_UAMDOMAINS.*/HS_UAMDOMAINS=\"$var$def\"/g" $chilliconf
  
 -    [ -e /dev/net/tun ] || {
 -        (cd /dev; mkdir net; cd net; mknod tun c 10 200)
@@ -89,7 +93,11 @@
 -    return $retval
 -}
 +        var=`uci -q get chilli.setting.uamallowed`
-+        sed -i "s/^HS_UAMALLOW.*/HS_UAMALLOW=\"$var\"/g" $chilliconf
++        def=`uci -q get chilli.setting.default_uamallowed`
++        if [ -n "$var" -a -n "$def" ]; then
++            var=$var","
++        fi
++        sed -i "s/^HS_UAMALLOW.*/HS_UAMALLOW=\"$var$def\"/g" $chilliconf
  
 -stop() {
 -    echo -n $"Stopping $prog: "
@@ -132,10 +140,7 @@
 +        else
 +            sed -i "s/^HS_DHCPGATEWAY.*/HS_DHCPGATEWAY=\"\"/g" $chilliconf
 +        fi
- 
--restart() {
--    stop
--    start
++
 +        var=`uci -q get chilli.setting.uamserver_enable`
 +        if [ "1" == $var ]; then 
 +            var=`uci -q get chilli.setting.uamserver`
@@ -162,7 +167,10 @@
 +            sed -i "s/^HS_UAMUIPORT.*/HS_UAMUIPORT=4990/g" $chilliconf
 +            sed -i "s/^HS_UAMSECRET.*/HS_UAMSECRET=\"\"/g" $chilliconf
 +        fi
-+
+ 
+-restart() {
+-    stop
+-    start
 +        . $chilliconf
  }
  
@@ -266,7 +274,7 @@
          fi
  	;;
      reload)
-@@ -131,6 +252,7 @@
+@@ -131,6 +260,7 @@
          action $"Service ${0##*/} does not support the reload action: " /bin/false
          exit 3
          ;;
