@@ -1,7 +1,7 @@
 Summary:   Coova-Chilli is a Wireless LAN Access Point Controller
 Name:      coova-chilli
 Version:   1.3.1.3
-Release:   8%{?dist}
+Release:   9%{?dist}
 URL:       http://coova.github.io/
 Source0:   %{name}-%{version}.tar.gz
 # These should be periodically refreshed upon rebuild with
@@ -58,6 +58,7 @@ sh bootstrap
     --enable-chilliproxy \
     --enable-chilliscript \
     --with-poll \
+    --enable-json \
     --enable-libjson \
     --enable-dhcpopt \
     --enable-gardenext \
@@ -164,6 +165,9 @@ fi
 %{_mandir}/man8/*.8*
 
 %changelog
+* Mon Sep 14 2015 Cristi Cimpianu <cristi@c-scale.ro>
+- 1.3.1.3.9 replaced disable-json with enable-json as requested by project owner
+
 * Mon Sep 14 2015 Cristi Cimpianu <cristi@c-scale.ro>
 - 1.3.1.3.8 add support for some default hidden allowed hosts and domains
 
