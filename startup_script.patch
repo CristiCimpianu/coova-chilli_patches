@@ -1,6 +1,6 @@
---- conf/chilli.in	2015-09-04 07:55:51.579050871 -0400
-+++ conf/chilli.in	2015-09-14 08:13:44.674094653 -0400
-@@ -42,84 +42,213 @@
+--- conf/chilli.in	2015-09-14 09:07:49.258369398 -0400
++++ conf/chilli.in	2015-09-14 10:51:46.825275697 -0400
+@@ -42,84 +42,227 @@
      exit 0
  }
  
@@ -131,6 +131,23 @@
  
 -    return $retval
 -}
++        var=`uci -q get chilli.setting.locname`
++        if [ -n "$var" ]; then
++            sed -i "s/^HS_LOC_NAME.*/HS_LOC_NAME=\"$var\"/g" $chilliconf
++        else
++            sed -i "s/^HS_LOC_NAME.*/HS_LOC_NAME=\"Arena HotSpot\"/g" $chilliconf
++        fi
+ 
+-restart() {
+-    stop
+-    start
++        var=`uci -q get chilli.setting.mode`
++        if [ -n "$var" ]; then
++            sed -i "s/^chilliController\.mode.*/chilliController\.mode=$var;/g" @ETCCHILLI@/www/chilliController.js
++        else
++            sed -i "s/^chilliController\.mode.*/chilliController\.mode=1;/g" @ETCCHILLI@/www/chilliController.js
++        fi
++
 +        var=`uci -q get chilli.setting.dhcpgateway_enable`
 +        if [ "1" == $var ]; then 
 +            var=`uci -q get chilli.setting.dhcpgateway`
@@ -167,10 +184,7 @@
 +            sed -i "s/^HS_UAMUIPORT.*/HS_UAMUIPORT=4990/g" $chilliconf
 +            sed -i "s/^HS_UAMSECRET.*/HS_UAMSECRET=\"\"/g" $chilliconf
 +        fi
- 
--restart() {
--    stop
--    start
++
 +        . $chilliconf
  }
  
@@ -274,7 +288,7 @@
          fi
  	;;
      reload)
-@@ -131,6 +260,7 @@
+@@ -131,6 +274,7 @@
          action $"Service ${0##*/} does not support the reload action: " /bin/false
          exit 3
          ;;

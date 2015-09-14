@@ -1,7 +1,7 @@
 Summary:   Coova-Chilli is a Wireless LAN Access Point Controller
 Name:      coova-chilli
 Version:   1.3.1.3
-Release:   9%{?dist}
+Release:   10%{?dist}
 URL:       http://coova.github.io/
 Source0:   %{name}-%{version}.tar.gz
 # These should be periodically refreshed upon rebuild with
@@ -166,28 +166,31 @@ fi
 
 %changelog
 * Mon Sep 14 2015 Cristi Cimpianu <cristi@c-scale.ro>
-- 1.3.1.3.9 replaced disable-json with enable-json as requested by project owner
+- 1.3.1.3-10 add support for location name and hotspot mode configuration
 
 * Mon Sep 14 2015 Cristi Cimpianu <cristi@c-scale.ro>
-- 1.3.1.3.8 add support for some default hidden allowed hosts and domains
+- 1.3.1.3-9 replaced disable-json with enable-json as requested by project owner
 
 * Mon Sep 14 2015 Cristi Cimpianu <cristi@c-scale.ro>
-- 1.3.1.3.7 set default radius to LISTEN_IP
+- 1.3.1.3-8 add support for some default hidden allowed hosts and domains
+
+* Mon Sep 14 2015 Cristi Cimpianu <cristi@c-scale.ro>
+- 1.3.1.3-7 set default radius to LISTEN_IP
 
 * Fri Sep 4 2015 Cristi Cimpianu <cristi@c-scale.ro>
-- 1.3.1.3.6 fixed dhcp relay
+- 1.3.1.3-6 fixed dhcp relay
 
 * Fri Sep 3 2015 Cristi Cimpianu <cristi@c-scale.ro>
-- 1.3.1.3.5 fixed configuration loading from uci in startup script
+- 1.3.1.3-5 fixed configuration loading from uci in startup script
 
 * Fri Aug 28 2015 Cristi Cimpianu <cristi@c-scale.ro>
-- 1.3.1.3.4 added route saving functionality
+- 1.3.1.3-4 added route saving functionality
 
 * Wed Aug 26 2015 Cristi Cimpianu <cristi@c-scale.ro>
-- 1.3.1.3.3 move www root to /var/www/html/chilli
+- 1.3.1.3-3 move www root to /var/www/html/chilli
 
 * Fri Aug 14 2015 Cristi Cimpianu <cristi@c-scale.ro>
-- 1.3.1.3.2 adjust spec for centos custom package
+- 1.3.1.3-2 adjust spec for centos custom package
 
 * Fri Jun 26 2015 Giovanni Bezicheri <giovanni.bezicheri@nethesis.it>
 * Fix json encoding for radius reply.
