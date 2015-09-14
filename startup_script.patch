@@ -1,6 +1,6 @@
---- conf/chilli.in	2015-09-01 06:46:39.189976922 -0400
-+++ conf/chilli.in	2015-09-01 07:36:43.943324043 -0400
-@@ -42,84 +42,149 @@
+--- conf/chilli.in	2015-09-04 07:55:51.579050871 -0400
++++ conf/chilli.in	2015-09-04 09:03:19.000129933 -0400
+@@ -42,84 +42,205 @@
      exit 0
  }
  
@@ -12,8 +12,6 @@
  
 -start() {
 -    echo -n $"Starting $prog: "
--
--    check_required
 +        DNS1=`grep nameserver /etc/resolv.conf | head -1 | cut -d" " -f2`
 +        DNS2=`grep nameserver /etc/resolv.conf | tail -1 | cut -d" " -f2`
 +        sed -i "s/^HS_DNS1.*/HS_DNS1=$DNS1/g" $chilliconf
@@ -36,8 +34,7 @@
 +        sed -i "s/^HS_WANIF=.*/HS_WANIF=$WAN/g" $chilliconf
 +        sed -i "s/^HS_LANIF=.*/HS_LANIF=$LAN/g" $chilliconf
  
--    /sbin/modprobe tun >/dev/null 2>&1
--    echo 1 > /proc/sys/net/ipv4/ip_forward
+-    check_required
 +        iparr=(${IP//./ })
 +        maskarr=(${NETMASK//./ })
 +        netarr=()
@@ -51,11 +48,22 @@
 +        sed -i "s/^HS_NETWORK.*/HS_NETWORK=$NET/g" $chilliconf
 +        sed -i "s/^HS_NETMASK.*/HS_NETMASK=$NETMASK/g" $chilliconf
 +        sed -i "s/^HS_UAMLISTEN.*/HS_UAMLISTEN=$IP/g" $chilliconf
++        sed -i "s/^HS_RADIUS=.*/HS_RADIUS=$IP/g" $chilliconf
 +
 +        ipsplit=`echo ${IP//./ }`
 +        iphex=`printf "%02X" $ipsplit `
 +        tlv="2B063304"$iphex
 +        sed -i "s/^HS_DHCPOPT.*/HS_DHCPOPT=\"$tlv\"/g" $chilliconf
++
++        var=`uci -q get chilli.setting.defidletimeout`
++        [ -n "$var" ] && {
++            sed -i "s/^HS_DEFIDLETIMEOUT.*/HS_DEFIDLETIMEOUT=\"$var\"/g" $chilliconf
++        }
+ 
+-    /sbin/modprobe tun >/dev/null 2>&1
+-    echo 1 > /proc/sys/net/ipv4/ip_forward
++        var=`uci -q get chilli.setting.uamdomain`
++        sed -i "s/^HS_UAMDOMAINS.*/HS_UAMDOMAINS=\"$var\"/g" $chilliconf
  
 -    [ -e /dev/net/tun ] || {
 -        (cd /dev; mkdir net; cd net; mknod tun c 10 200)
@@ -79,8 +87,9 @@
 -    echo
 -    [ $retval -eq 0 ] && touch $lockfile
 -    return $retval
-+        . $chilliconf
- }
+-}
++        var=`uci -q get chilli.setting.uamallowed`
++        sed -i "s/^HS_UAMALLOW.*/HS_UAMALLOW=\"$var\"/g" $chilliconf
  
 -stop() {
 -    echo -n $"Stopping $prog: "
@@ -103,7 +112,63 @@
 -        [ -f $ROUTES_FILE ] && {
 -            restoreroutes
 -            rm $ROUTES_FILE
-+case "$1" in
+-        }
+-    }
++        var=`uci -q get chilli.setting.radiusnasid`
++        if [ -n "$var" ]; then
++            sed -i "s/^HS_NASID.*/HS_NASID=\"$var\"/g" $chilliconf
++        else
++            sed -i "s/^HS_NASID.*/HS_NASID=\"nas01\"/g" $chilliconf
++        fi
+ 
+-    return $retval
+-}
++        var=`uci -q get chilli.setting.dhcpgateway_enable`
++        if [ "1" == $var ]; then 
++            var=`uci -q get chilli.setting.dhcpgateway`
++            [ -n "$var" ] && {
++                sed -i "s/^HS_DHCPGATEWAY.*/HS_DHCPGATEWAY=\"$var\"/g" $chilliconf
++            }
++        else
++            sed -i "s/^HS_DHCPGATEWAY.*/HS_DHCPGATEWAY=\"\"/g" $chilliconf
++        fi
+ 
+-restart() {
+-    stop
+-    start
++        var=`uci -q get chilli.setting.uamserver_enable`
++        if [ "1" == $var ]; then 
++            var=`uci -q get chilli.setting.uamserver`
++            [ -n "$var" ] && {
++                sed -i "s/^HS_UAMFORMAT.*/HS_UAMFORMAT=\"$var\"/g" $chilliconf
++            }
++            var=`uci -q get chilli.setting.uamport`
++            [ -n "$var" ] && {
++                sed -i "s/^HS_UAMPORT.*/HS_UAMPORT=\"$var\"/g" $chilliconf
++            }
++            var=`uci -q get chilli.setting.uamuiport`
++            [ -n "$var" ] && {
++                sed -i "s/^HS_UAMUIPORT.*/HS_UAMUIPORT=\"$var\"/g" $chilliconf
++            }
++            var=`uci -q get chilli.setting.uamsecret`
++            if [ -n "$var" ]; then
++                sed -i "s/^HS_UAMSECRET.*/HS_UAMSECRET=\"$var\"/g" $chilliconf
++            else
++                sed -i "s/^HS_UAMSECRET.*/HS_UAMSECRET=\"\"/g" $chilliconf
++            fi
++        else
++            sed -i "s/^HS_UAMFORMAT.*/HS_UAMFORMAT=\"http:\/\/1.0.0.1\/www\/login.html\"/g" $chilliconf
++            sed -i "s/^HS_UAMPORT.*/HS_UAMPORT=3990/g" $chilliconf
++            sed -i "s/^HS_UAMUIPORT.*/HS_UAMUIPORT=4990/g" $chilliconf
++            sed -i "s/^HS_UAMSECRET.*/HS_UAMSECRET=\"\"/g" $chilliconf
++        fi
++
++        . $chilliconf
+ }
+ 
+ case "$1" in
+-    start|stop|restart)
+-        $1
 +    start)
 +        if [ '0' == `uci -q get chilli.setting.enable` ]; then
 +            exit 0;
@@ -118,11 +183,8 @@
 +
 +        [ -e /dev/net/tun ] || {
 +            (cd /dev; mkdir net; cd net; mknod tun c 10 200)
-         }
--    }
- 
--    return $retval
--}
++        }
++
 +        readconfig
 +        writeconfig
 +        radiusconfig
@@ -131,19 +193,12 @@
 +            (crontab -l 2>&- | grep -v $0
 +            echo "*/$HS_ADMINTERVAL * * * * $0 radconfig") | crontab - 2>&-
 +        }
- 
--restart() {
--    stop
--    start
--}
++
 +        test ${HS_LANIF_KEEPADDR:-0} -eq 0 && {
 +            storeroutes $HS_LANIF
 +            ifconfig $HS_LANIF 0.0.0.0
 +        }
- 
--case "$1" in
--    start|stop|restart)
--        $1
++
 +        if [ "$(which start-stop-daemon 2>/dev/null)" = "" ]; then
 +            daemon $exec -c $CONFIG --pidfile=$pidfile
 +        else
@@ -211,7 +266,7 @@
          fi
  	;;
      reload)
-@@ -131,6 +196,7 @@
+@@ -131,6 +252,7 @@
          action $"Service ${0##*/} does not support the reload action: " /bin/false
          exit 3
          ;;
