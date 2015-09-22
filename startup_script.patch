@@ -1,6 +1,6 @@
 --- conf/chilli.in	2015-09-14 09:07:49.258369398 -0400
-+++ conf/chilli.in	2015-09-14 10:51:46.825275697 -0400
-@@ -42,84 +42,227 @@
++++ conf/chilli.in	2015-09-17 11:44:39.000000000 -0400
+@@ -42,84 +42,237 @@
      exit 0
  }
  
@@ -25,10 +25,12 @@
 +                WAN="eth1"
 +                LAN="eth0"
 +                IP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-eth0 | head -1 | cut -d"=" -f2 | tr -d '"'`
++                WANIP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2 | tr -d '"'`
 +                NETMASK=`grep NETMASK /etc/sysconfig/network-scripts/ifcfg-eth0 | head -1 | cut -d"=" -f2 | tr -d '"'`
 +        else
 +                GW=`grep GATEWAY /etc/sysconfig/network-scripts/ifcfg-eth0 | head -1 | cut -d"=" -f2`
 +                IP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2 | tr -d '"'`
++                WANIP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-eth0 | head -1 | cut -d"=" -f2 | tr -d '"'`
 +                NETMASK=`grep NETMASK /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2 | tr -d '"'`
 +        fi
 +        sed -i "s/^HS_WANIF=.*/HS_WANIF=$WAN/g" $chilliconf
@@ -49,6 +51,7 @@
 +        sed -i "s/^HS_NETMASK.*/HS_NETMASK=$NETMASK/g" $chilliconf
 +        sed -i "s/^HS_UAMLISTEN.*/HS_UAMLISTEN=$IP/g" $chilliconf
 +        sed -i "s/^HS_RADIUS=.*/HS_RADIUS=$IP/g" $chilliconf
++        sed -i "s/^HS_RADIUS2=.*/HS_RADIUS2=$WANIP/g" $chilliconf
 +
 +        ipsplit=`echo ${IP//./ }`
 +        iphex=`printf "%02X" $ipsplit `
@@ -141,6 +144,13 @@
 -restart() {
 -    stop
 -    start
++        var=`uci -q get chilli.setting.coaport`
++        if [ -n "$var" ]; then
++            sed -i "s/^HS_COAPORT.*/HS_COAPORT=$var/g" $chilliconf
++        else
++            sed -i "s/^HS_COAPORT.*/HS_COAPORT=3798/g" $chilliconf
++        fi
++
 +        var=`uci -q get chilli.setting.mode`
 +        if [ -n "$var" ]; then
 +            sed -i "s/^chilliController\.mode.*/chilliController\.mode=$var;/g" @ETCCHILLI@/www/chilliController.js
@@ -162,7 +172,7 @@
 +        if [ "1" == $var ]; then 
 +            var=`uci -q get chilli.setting.uamserver`
 +            [ -n "$var" ] && {
-+                sed -i "s/^HS_UAMFORMAT.*/HS_UAMFORMAT=\"$var\"/g" $chilliconf
++                sed -i "s#^HS_UAMFORMAT.*#HS_UAMFORMAT=\"$var\"#g" $chilliconf
 +            }
 +            var=`uci -q get chilli.setting.uamport`
 +            [ -n "$var" ] && {
@@ -288,7 +298,7 @@
          fi
  	;;
      reload)
-@@ -131,6 +274,7 @@
+@@ -131,6 +284,7 @@
          action $"Service ${0##*/} does not support the reload action: " /bin/false
          exit 3
          ;;
