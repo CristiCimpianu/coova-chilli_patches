@@ -1,7 +1,7 @@
 Summary:   Coova-Chilli is a Wireless LAN Access Point Controller
 Name:      coova-chilli
 Version:   1.3.1.3
-Release:   13%{?dist}
+Release:   15%{?dist}
 URL:       http://coova.github.io/
 Source0:   %{name}-%{version}.tar.gz
 # These should be periodically refreshed upon rebuild with
@@ -165,6 +165,12 @@ fi
 %{_mandir}/man8/*.8*
 
 %changelog
+* Tue Oct 20 2015 Cristi Cimpianu <cristi@c-scale.ro>
+- 1.3.1.3-15 add support in init script for vlan interfaces
+
+* Fri Sep 25 2015 Cristi Cimpianu <cristi@c-scale.ro>
+- 1.3.1.3-14 add support in init script to overwrite radius secret
+
 * Tue Sep 22 2015 Cristi Cimpianu <cristi@c-scale.ro>
 - 1.3.1.3-13 fix support for coa port configuration
 
