@@ -1,5 +1,5 @@
 --- conf/chilli.in	2015-09-14 09:07:49.258369398 -0400
-+++ conf/chilli.in	2015-10-20 09:06:04.000000000 -0400
++++ conf/chilli.in	2015-10-28 04:37:37.000000000 -0400
 @@ -31,10 +31,12 @@
  
  pidfile=@VARRUN@/chilli.pid
@@ -13,7 +13,7 @@
  fi
  
  [ -f $CONFIG ] || {
-@@ -42,84 +44,234 @@
+@@ -42,84 +44,235 @@
      exit 0
  }
  
@@ -55,6 +55,7 @@
 +        sed -i "s/^HS_UAMLISTEN.*/HS_UAMLISTEN=$IP/g" $chilliconf
 +        sed -i "s/^HS_RADIUS=.*/HS_RADIUS=$IP/g" $chilliconf
 +        sed -i "s/^HS_RADIUS2=.*/HS_RADIUS2=$WANIP/g" $chilliconf
++        sed -i "s/^.*HS_NASIP.*/HS_NASIP=\"$WANIP\"/g" $chilliconf
 +
 +        var=`uci -q get radiusd.setting.secret`
 +        [ -n "$var" ] && {
@@ -308,7 +309,7 @@
          fi
  	;;
      reload)
-@@ -131,6 +283,7 @@
+@@ -131,6 +284,7 @@
          action $"Service ${0##*/} does not support the reload action: " /bin/false
          exit 3
          ;;
