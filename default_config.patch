@@ -84,8 +84,8 @@
  # HS_ANYIP=on		   # Allow any IP address on subscriber LAN
  #
 -# HS_MACAUTH=on		   # To turn on MAC Authentication
-+HS_MACAUTH=on		   # To turn on MAC Authentication
-+HS_MACREAUTH=on
++HS_MACAUTH=off		   # To turn on MAC Authentication
++HS_MACREAUTH=off
 +HS_PAP_OK=off
 +HS_ACCTUPDATE=on
 +HS_IEEE8021Q=on

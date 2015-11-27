@@ -1,5 +1,5 @@
---- conf/chilli.in	2015-09-14 09:07:49.258369398 -0400
-+++ conf/chilli.in	2015-10-28 04:37:37.000000000 -0400
+--- conf/chilli.in	2015-10-28 05:54:58.355201255 -0400
++++ conf/chilli.in	2015-11-27 09:22:28.000000000 -0500
 @@ -31,10 +31,12 @@
  
  pidfile=@VARRUN@/chilli.pid
@@ -13,7 +13,7 @@
  fi
  
  [ -f $CONFIG ] || {
-@@ -42,84 +44,235 @@
+@@ -42,84 +44,243 @@
      exit 0
  }
  
@@ -205,6 +205,14 @@
 +            sed -i "s/^HS_UAMSECRET.*/HS_UAMSECRET=\"\"/g" $chilliconf
 +        fi
 +
++         var=`uci -q get chilli.setting.macauth`
++         [ -n "$var" ] && {
++             state="off"
++             [ "$var" == "1" ] && state="on"
++             sed -i "s/^HS_MACAUTH.*/HS_MACAUTH=$state/g" $chilliconf
++             sed -i "s/^HS_MACREAUTH.*/HS_MACREAUTH=$state/g" $chilliconf
++         }
++
 +        . $chilliconf
  }
  
@@ -309,7 +317,7 @@
          fi
  	;;
      reload)
-@@ -131,6 +284,7 @@
+@@ -131,6 +292,7 @@
          action $"Service ${0##*/} does not support the reload action: " /bin/false
          exit 3
          ;;

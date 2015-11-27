@@ -1,7 +1,7 @@
 Summary:   Coova-Chilli is a Wireless LAN Access Point Controller
 Name:      coova-chilli
 Version:   1.3.1.3
-Release:   16%{?dist}
+Release:   17%{?dist}
 URL:       http://coova.github.io/
 Source0:   %{name}-%{version}.tar.gz
 # These should be periodically refreshed upon rebuild with
@@ -165,6 +165,9 @@ fi
 %{_mandir}/man8/*.8*
 
 %changelog
+* Wed Nov 27 2015 Cristi Cimpianu <cristi@c-scale.ro>
+- 1.3.1.3-17 add support to configure mac auth from uci
+
 * Wed Oct 28 2015 Cristi Cimpianu <cristi@c-scale.ro>
 - 1.3.1.3-16 sync with coova master, 
 - add support for nasip config in startup script
