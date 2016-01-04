@@ -1,7 +1,7 @@
 Summary:   Coova-Chilli is a Wireless LAN Access Point Controller
 Name:      coova-chilli
 Version:   1.3.1.3
-Release:   17%{?dist}
+Release:   19%{?dist}
 URL:       http://coova.github.io/
 Source0:   %{name}-%{version}.tar.gz
 # These should be periodically refreshed upon rebuild with
@@ -78,7 +78,7 @@ sh bootstrap
     --with-openssl \
     --enable-chilliradsec \
 %endif
-
+#    --enable-debug2 \
 #--with-nfcoova \
 
 make
@@ -131,6 +131,9 @@ make clean
 /sbin/chkconfig --add chilli
 #/sbin/service httpd condrestart 2>&1 >/dev/null
 /sbin/service chilli condrestart 2>&1 >/dev/null
+%if %{!?_without_ssl:1}0
+openssl req -x509 -newkey rsa:2048 -keyout /etc/chilli/dummy_key.pem -out /etc/chilli/dummy_cert.pem -nodes -subj '/OU=Arena HotSpot Wireless/O=Please accept this certificate or click this link http:\/\/1.0.0.1/CN=Arena HotSpot Access' -days 14600
+%endif
 
 %preun
 if [ $1 = 0 ]; then
@@ -165,6 +168,13 @@ fi
 %{_mandir}/man8/*.8*
 
 %changelog
+* Wed Dec 11 2015 Cristi Cimpianu <cristi@c-scale.ro>
+- 1.3.1.3-19 remove management of vlan interfaces from the chilli uci config
+- add suport to enable/disable option43
+
+* Wed Dec 7 2015 Cristi Cimpianu <cristi@c-scale.ro>
+- 1.3.1.3-18 add support for redirssl and dnsmasq (aka local dns)
+
 * Wed Nov 27 2015 Cristi Cimpianu <cristi@c-scale.ro>
 - 1.3.1.3-17 add support to configure mac auth from uci
 

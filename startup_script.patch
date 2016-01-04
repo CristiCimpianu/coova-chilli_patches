@@ -1,5 +1,5 @@
---- conf/chilli.in	2015-10-28 05:54:58.355201255 -0400
-+++ conf/chilli.in	2015-11-27 09:22:28.000000000 -0500
+--- conf/chilli.in	2015-12-11 04:23:14.607415510 -0500
++++ conf/chilli.in	2015-12-14 05:40:49.000000000 -0500
 @@ -31,10 +31,12 @@
  
  pidfile=@VARRUN@/chilli.pid
@@ -13,7 +13,7 @@
  fi
  
  [ -f $CONFIG ] || {
-@@ -42,84 +44,243 @@
+@@ -42,84 +44,259 @@
      exit 0
  }
  
@@ -24,19 +24,16 @@
  
 -start() {
 -    echo -n $"Starting $prog: "
-+        DNS1=`grep nameserver /etc/resolv.conf | head -1 | cut -d" " -f2`
-+        DNS2=`grep nameserver /etc/resolv.conf | tail -1 | cut -d" " -f2`
-+        sed -i "s/^HS_DNS1.*/HS_DNS1=$DNS1/g" $chilliconf
-+        sed -i "s/^HS_DNS2.*/HS_DNS2=$DNS2/g" $chilliconf
-+
-+        WAN="eth0"
++        GW=`grep GATEWAY /etc/sysconfig/network-scripts/ifcfg-eth1 | head -1 | cut -d"=" -f2 | tr -d "'\""`
++        if [ ! -z $GW ]; then
++            WAN="eth1"
++        else
++            WAN="eth0"
++        fi
 +        LAN=`uci -q get chilli.setting.interface`
-+        [ "$LAN" == "eth0" ] && WAN="eth1"
-+        IP=`uci -q get chilli.setting.ip`
-+        WANIP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-${WAN} | head -1 | cut -d"=" -f2 | tr -d '"'`
-+        NETMASK=`uci -q get chilli.setting.mask`
-+        VLAN=`uci -q get chilli.setting.vlan`
-+        [ "$VLAN" != "untagged" ] && LAN=$LAN"."$VLAN
++        IP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-${LAN} | head -1 | cut -s -d"=" -f2 | tr -d "'\""`
++        WANIP=`grep IPADDR /etc/sysconfig/network-scripts/ifcfg-${WAN} | head -1 | cut -s -d"=" -f2 | tr -d "'\""`
++        NETMASK=`grep NETMASK /etc/sysconfig/network-scripts/ifcfg-${LAN} | head -1 | cut -s -d"=" -f2 | tr -d "'\""`
 +        sed -i "s/^HS_WANIF=.*/HS_WANIF=$WAN/g" $chilliconf
 +        sed -i "s/^HS_LANIF=.*/HS_LANIF=$LAN/g" $chilliconf
 +
@@ -57,17 +54,17 @@
 +        sed -i "s/^HS_RADIUS2=.*/HS_RADIUS2=$WANIP/g" $chilliconf
 +        sed -i "s/^.*HS_NASIP.*/HS_NASIP=\"$WANIP\"/g" $chilliconf
 +
++        DNS1=`grep nameserver /etc/resolv.conf | head -1 | cut -d" " -f2`
++#        DNS2=`grep nameserver /etc/resolv.conf | tail -1 | cut -d" " -f2`
++        sed -i "s/^HS_DNS1.*/HS_DNS1=$IP/g" $chilliconf
++        sed -i "s/^HS_DNS2.*/HS_DNS2=$DNS1/g" $chilliconf
++
 +        var=`uci -q get radiusd.setting.secret`
 +        [ -n "$var" ] && {
 +            sed -i "s/^HS_RADSECRET.*/HS_RADSECRET=\"$var\"/g" $chilliconf
 +        }
  
 -    check_required
-+        ipsplit=`echo ${IP//./ }`
-+        iphex=`printf "%02X" $ipsplit `
-+        tlv="2B063304"$iphex
-+        sed -i "s/^HS_DHCPOPT.*/HS_DHCPOPT=\"$tlv\"/g" $chilliconf
-+
 +        var=`uci -q get chilli.setting.defidletimeout`
 +        [ -n "$var" ] && {
 +            sed -i "s/^HS_DEFIDLETIMEOUT.*/HS_DEFIDLETIMEOUT=\"$var\"/g" $chilliconf
@@ -213,6 +210,25 @@
 +             sed -i "s/^HS_MACREAUTH.*/HS_MACREAUTH=$state/g" $chilliconf
 +         }
 +
++         var=`uci -q get chilli.setting.redirssl`
++         [ -n "$var" ] && {
++             state="off"
++             [ "$var" == "1" ] && state="on"
++             sed -i "s/^HS_REDIRSSL.*/HS_REDIRSSL=$state/g" $chilliconf
++         }
++
++         var=`uci -q get chilli.setting.option43`
++         [ -n "$var" ] && {
++             if [ "$var" == "1" ]; then
++                 ipsplit=`echo ${IP//./ }`
++                 iphex=`printf "%02X" $ipsplit `
++                 tlv="2B063304"$iphex
++                 sed -i "s/^.*HS_DHCPOPT.*/HS_DHCPOPT=\"$tlv\"/g" $chilliconf
++             else
++                 sed -i "s/^.*HS_DHCPOPT.*/#HS_DHCPOPT=\"\"/g" $chilliconf
++             fi
++         }
++
 +        . $chilliconf
  }
  
@@ -317,7 +333,7 @@
          fi
  	;;
      reload)
-@@ -131,6 +292,7 @@
+@@ -131,6 +308,7 @@
          action $"Service ${0##*/} does not support the reload action: " /bin/false
          exit 3
          ;;
