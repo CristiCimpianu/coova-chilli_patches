@@ -225,7 +225,7 @@
 +                 tlv="2B063304"$iphex
 +                 sed -i "s/^.*HS_DHCPOPT.*/HS_DHCPOPT=\"$tlv\"/g" $chilliconf
 +             else
-+                 sed -i "s/^.*HS_DHCPOPT.*/#HS_DHCPOPT=\"\"/g" $chilliconf
++                 sed -i "s/^.*HS_DHCPOPT.*/HS_DHCPOPT=\"\"/g" $chilliconf
 +             fi
 +         }
 +

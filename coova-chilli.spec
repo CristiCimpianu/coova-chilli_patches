@@ -1,7 +1,7 @@
 Summary:   Coova-Chilli is a Wireless LAN Access Point Controller
 Name:      coova-chilli
 Version:   1.3.1.3
-Release:   19%{?dist}
+Release:   20%{?dist}
 URL:       http://coova.github.io/
 Source0:   %{name}-%{version}.tar.gz
 # These should be periodically refreshed upon rebuild with
@@ -168,6 +168,10 @@ fi
 %{_mandir}/man8/*.8*
 
 %changelog
+* Wed Jan 4 2016 Cristi Cimpianu <cristi@c-scale.ro>
+- 1.3.1.3-20 force regenerating main.conf when changing HS_DHCPOPT
+- add mqtt ports to whitelist
+
 * Wed Dec 11 2015 Cristi Cimpianu <cristi@c-scale.ro>
 - 1.3.1.3-19 remove management of vlan interfaces from the chilli uci config
 - add suport to enable/disable option43
